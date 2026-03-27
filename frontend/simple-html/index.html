@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure AI Automation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #fbbf24;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .mode-badge.azure {
+            background: #0078d4;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.ai {
+            background: white;
+            color: #333;
+            border: 1px solid #e5e7eb;
+        }
+
+        .message .label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .message .content {
+            line-height: 1.5;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Budget Widget */
+        .budget-widget {
+            margin-bottom: 20px;
+        }
+
+        .budget-bar {
+            width: 100%;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .budget-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .budget-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Resources List */
+        .resources-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .resource-item {
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .resource-item h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .resource-item .details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-badge.running {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-badge.stopped {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            padding: 10px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .action-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                🤖 Azure AI Automation Dashboard
+                <span class="mode-badge" id="mode-badge">MOCK</span>
+            </h1>
+            <p class="subtitle">Chat with AI to manage your Azure infrastructure</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chat Interface -->
+            <div class="card">
+                <h2>💬 AI Assistant</h2>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message ai">
+                            <div class="label">AI Assistant</div>
+                            <div class="content">
+                                Hi! I'm your Azure cloud engineer assistant. I can help you:
+                                <ul style="margin-top: 10px; margin-left: 20px;">
+                                    <li>Create virtual machines</li>
+                                    <li>Stop/start/delete VMs</li>
+                                    <li>Check your budget</li>
+                                    <li>List all resources</li>
+                                </ul>
+                                Try asking: "Create a small VM for testing"
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input
+                            type="text"
+                            id="user-input"
+                            placeholder="Type your message here..."
+                            autocomplete="off"
+                        />
+                        <button class="btn btn-primary" id="send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Budget Widget -->
+                <div class="card budget-widget">
+                    <h2>💰 Budget Status</h2>
+                    <div class="budget-bar">
+                        <div class="budget-fill" id="budget-fill" style="width: 0%">
+                            0%
+                        </div>
+                    </div>
+                    <div class="budget-info">
+                        <span>Used: $<span id="budget-used">0.00</span></span>
+                        <span>Limit: $<span id="budget-limit">10.00</span></span>
+                    </div>
+                    <div class="budget-info">
+                        <span>Remaining: $<span id="budget-remaining">10.00</span></span>
+                        <span><span id="budget-ops">0</span> operations</span>
+                    </div>
+                </div>
+
+                <!-- Resources -->
+                <div class="card">
+                    <h2>📦 Virtual Machines</h2>
+                    <div class="resources-list" id="resources-list">
+                        <div class="loading">No resources yet</div>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="refreshAll()">🔄 Refresh</button>
+                        <button class="action-btn" onclick="askAI('List all VMs')">📋 List All</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+        let conversationId = 'web-' + Date.now();
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const budgetFill = document.getElementById('budget-fill');
+        const budgetUsed = document.getElementById('budget-used');
+        const budgetLimit = document.getElementById('budget-limit');
+        const budgetRemaining = document.getElementById('budget-remaining');
+        const budgetOps = document.getElementById('budget-ops');
+        const resourcesList = document.getElementById('resources-list');
+        const modeBadge = document.getElementById('mode-badge');
+
+        // Initialize
+        async function init() {
+            await loadConfig();
+            await refreshBudget();
+            await refreshResources();
+
+            // Setup event listeners
+            sendBtn.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        }
+
+        // Load configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/config`);
+                const config = await response.json();
+
+                modeBadge.textContent = config.mode.toUpperCase();
+                modeBadge.className = 'mode-badge ' + config.mode;
+                budgetLimit.textContent = config.budget_limit.toFixed(2);
+            } catch (error) {
+                console.error('Failed to load config:', error);
+            }
+        }
+
+        // Send message to AI
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage('user', message);
+            userInput.value = '';
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        conversation_id: conversationId
+                    })
+                });
+
+                const data = await response.json();
+
+                // Add AI response
+                addMessage('ai', data.message);
+
+                // Refresh data if function was called
+                if (data.function_called) {
+                    await refreshAll();
+                }
+
+            } catch (error) {
+                addMessage('ai', '❌ Error: ' + error.message);
+            } finally {
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // Add message to chat
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.textContent = role === 'user' ? 'You' : 'AI Assistant';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'content';
+            contentDiv.textContent = content;
+
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Refresh budget
+        async function refreshBudget() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/budget`);
+                const data = await response.json();
+
+                budgetUsed.textContent = data.current_spend.toFixed(2);
+                budgetRemaining.textContent = data.remaining.toFixed(2);
+                budgetOps.textContent = data.operations_count;
+
+                const percentage = data.percentage_used;
+                budgetFill.style.width = percentage + '%';
+                budgetFill.textContent = percentage.toFixed(1) + '%';
+
+            } catch (error) {
+                console.error('Failed to refresh budget:', error);
+            }
+        }
+
+        // Refresh resources
+        async function refreshResources() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/resources`);
+                const data = await response.json();
+
+                if (data.total_count === 0) {
+                    resourcesList.innerHTML = '<div class="loading">No resources yet</div>';
+                    return;
+                }
+
+                resourcesList.innerHTML = '';
+                data.resources.forEach(vm => {
+                    const item = document.createElement('div');
+                    item.className = 'resource-item';
+                    item.innerHTML = `
+                        <h4>
+                            ${vm.name}
+                            <span class="status-badge ${vm.status}">${vm.status}</span>
+                        </h4>
+                        <div class="details">
+                            ${vm.size} • ${vm.region}<br>
+                            $${vm.cost_per_hour}/hr • $${vm.cost_per_month}/mo
+                        </div>
+                    `;
+                    resourcesList.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Failed to refresh resources:', error);
+                resourcesList.innerHTML = '<div class="error">Failed to load resources</div>';
+            }
+        }
+
+        // Refresh all data
+        async function refreshAll() {
+            await refreshBudget();
+            await refreshResources();
+        }
+
+        // Quick AI question
+        function askAI(question) {
+            userInput.value = question;
+            sendMessage();
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
