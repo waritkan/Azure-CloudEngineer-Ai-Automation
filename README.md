@@ -335,6 +335,3 @@ Built with inspiration from:
 - Model Context Protocol (MCP) concepts
 - Modern cloud-native design patterns
 
----
-
-**Ready to impress in your next Cloud Engineer interview!** 🚀
